@@ -105,7 +105,28 @@ public class GraphAdjMatrix extends Graph {
 	 */	
 	public List<Integer> getDistance2(int v) {
 		// XXX Implement this method in week 2
-		return null;
+		List<Integer> distance2 = new ArrayList<Integer>();
+		int[][] tmp = adjMatrix;
+		int m1 = adjMatrix.length;
+		int n2 = tmp[0].length;
+		int[][] product = new int[m1][n2];
+		for(int i=0;i<m1;i++){
+			for(int j=0;j<n2;j++){
+				for(int k=0;k<n2;k++){
+					product[i][j] += adjMatrix[i][k]*tmp[k][j];
+				}
+			}
+		}
+			for(int j=0;j<n2;j++){
+				if(product[v][j]!=0){
+					int k = product[v][j];
+					while(k!=0){
+						distance2.add(j);
+						k--;
+					}
+				}
+			}
+		return distance2;
 	}
 	
 	/**

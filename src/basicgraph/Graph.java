@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 import util.GraphLoader;
 
@@ -122,7 +120,14 @@ public abstract class Graph {
 	 */
 	public List<Integer> degreeSequence() {
 		// XXX: Implement in part 1 of week 2
-		return null;
+		List<Integer> seq = new ArrayList<Integer>();
+		for(int i=0;i<numVertices;i++){
+			Integer tmp = getNeighbors(i).size();
+			tmp += getInNeighbors(i).size();
+			seq.add(tmp);
+		}
+		Collections.sort(seq,Collections.reverseOrder());
+		return seq;
 	}
 	
 	/**

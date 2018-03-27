@@ -14,12 +14,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import geography.GeographicPoint;
-import geography.RoadSegment;
 import util.GraphLoader;
 
 /**
@@ -32,25 +32,17 @@ import util.GraphLoader;
 public class MapGraph {
 	//TODO: Add your member variables here in WEEK 3
 	public HashMap<GeographicPoint, MapNode> vertices;
-
-	public class MapNode{
-		public GeographicPoint location;
-		public HashSet<RoadSegment> neighbours;
-		
-		public MapNode(GeographicPoint vertex){
-			location = vertex;
-			neighbours = new HashSet<RoadSegment>();
-		}
-
-	}
+	public HashSet<MapEdge> edges;
 	
 	/** 
 	 * Create a new empty MapGraph 
 	 */
+	
 	public MapGraph()
 	{
 		// TODO: Implement in this constructor in WEEK 3
 		vertices = new HashMap<GeographicPoint, MapNode>();
+		edges = new HashSet<MapEdge>();
 	}
 	
 	/**
@@ -100,10 +92,12 @@ public class MapGraph {
 	public boolean addVertex(GeographicPoint location)
 	{
 		// TODO: Implement this method in WEEK 3
-		MapNode vertex = new MapNode(location);
-		if(location==null || vertices.keySet().contains(location))
+		if(location==null)
+			return false;
+		if(vertices.keySet().contains(location))
 			return false;
 		else{
+			MapNode vertex = new MapNode(location);
 			vertices.put(location, vertex);
 			return true;
 		}
@@ -123,16 +117,16 @@ public class MapGraph {
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
 			String roadType, double length) throws IllegalArgumentException {
-		if(!vertices.containsKey(from)){
-			addVertex(from);
-		}
-		if(!vertices.containsKey(to)){
-			
-			addVertex(to);
-		}
-		
+//		if(!vertices.containsKey(from)){
+//			addVertex(from);
+//		}
+//		if(!vertices.containsKey(to)){
+//			
+//			addVertex(to);
+//		}
+//		
 		MapNode frm = vertices.get(from);
-		RoadSegment edge = new RoadSegment(from, to, new ArrayList<GeographicPoint>(), 
+		MapEdge edge = new MapEdge(from, to, 
 					roadName, roadType, length);
 		frm.neighbours.add(edge);
 		vertices.put(from, frm);
@@ -169,6 +163,8 @@ public class MapGraph {
 		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
+		if (start == null || goal == null)
+			throw new NullPointerException("Cannot find route from or to null node");
 		List<GeographicPoint> result = new ArrayList<GeographicPoint>();
 		Queue<GeographicPoint> que = new LinkedList<>();
 		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
@@ -190,7 +186,7 @@ public class MapGraph {
 				return result;
 			}
 			MapNode tmp = vertices.get(curr);
-			for(RoadSegment r: tmp.neighbours){
+			for(MapEdge r: tmp.neighbours){
 				GeographicPoint other = r.getOtherPoint(curr);
 				if(!visited.contains(other)){
 					visited.add(other);
@@ -234,6 +230,46 @@ public class MapGraph {
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
 		
+		if (start == null || goal == null)
+			throw new NullPointerException("Cannot find route from or to null node");
+		List<GeographicPoint> result = new ArrayList<GeographicPoint>();
+		PriorityQueue<MapNode> que = new PriorityQueue<MapNode>();
+		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
+		HashMap<GeographicPoint,GeographicPoint> parent = new HashMap<GeographicPoint,GeographicPoint>();
+		que.add(vertices.get(start));
+		//nodeSearched.accept(start);
+		vertices.get(start).distance = 0;
+		while(!que.isEmpty()){
+			MapNode curr = que.poll();			
+			GeographicPoint loc = curr.location;
+			if(!visited.contains(loc)){
+				visited.add(loc);
+				nodeSearched.accept(loc);
+				if(loc.x == goal.x && loc.y==goal.y){
+					result.add(goal);
+					while(true){
+						GeographicPoint p = parent.get(result.get(result.size()-1));
+						result.add(p);
+						if(p.x==start.x && p.y==start.y)
+							break;
+					}
+					Collections.reverse(result);
+					return result;
+				}
+				for(MapEdge r: curr.neighbours){
+					GeographicPoint other = r.getOtherPoint(loc);
+					if(!visited.contains(other)){
+						MapNode othr = vertices.get(other);
+						if(othr.distance > curr.distance+r.getLength() ){
+							othr.distance = curr.distance+r.getLength();
+							parent.put(other, loc);
+							que.add(othr);
+						}
+					}
+				}
+			}
+
+		}
 		return null;
 	}
 
@@ -266,6 +302,48 @@ public class MapGraph {
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
 		
+		if (start == null || goal == null)
+			throw new NullPointerException("Cannot find route from or to null node");
+		List<GeographicPoint> result = new ArrayList<GeographicPoint>();
+		PriorityQueue<MapNode> que = new PriorityQueue<MapNode>();
+		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
+		HashMap<GeographicPoint,GeographicPoint> parent = new HashMap<GeographicPoint,GeographicPoint>();
+		que.add(vertices.get(start));
+		//nodeSearched.accept(start);
+		vertices.get(start).distance = 0;
+		while(!que.isEmpty()){
+			MapNode curr = que.poll();			
+			GeographicPoint loc = curr.location;
+			if(!visited.contains(loc)){
+				visited.add(loc);
+				nodeSearched.accept(loc);
+				if(loc.x == goal.x && loc.y==goal.y){
+					result.add(goal);
+					while(true){
+						GeographicPoint p = parent.get(result.get(result.size()-1));
+						result.add(p);
+						if(p.x==start.x && p.y==start.y)
+							break;
+					}
+					Collections.reverse(result);
+					return result;
+				}
+				for(MapEdge r: curr.neighbours){
+					GeographicPoint other = r.getOtherPoint(loc);
+					if(!visited.contains(other)){
+						MapNode othr = vertices.get(other);
+						double predDistance = other.distance(goal);
+						double totalDistance = predDistance+curr.distance+r.getLength();
+						if(othr.distance > totalDistance){
+							othr.distance = totalDistance;
+							parent.put(other, loc);
+							que.add(othr);
+						}
+					}
+				}
+			}
+
+		}
 		return null;
 	}
 

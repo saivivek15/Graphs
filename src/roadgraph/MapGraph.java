@@ -229,7 +229,7 @@ public class MapGraph {
 
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
-		
+		int count=0;
 		if (start == null || goal == null)
 			throw new NullPointerException("Cannot find route from or to null node");
 		List<GeographicPoint> result = new ArrayList<GeographicPoint>();
@@ -240,6 +240,7 @@ public class MapGraph {
 		//nodeSearched.accept(start);
 		vertices.get(start).distance = 0;
 		while(!que.isEmpty()){
+			count += 1;
 			MapNode curr = que.poll();			
 			GeographicPoint loc = curr.location;
 			if(!visited.contains(loc)){
@@ -254,6 +255,7 @@ public class MapGraph {
 							break;
 					}
 					Collections.reverse(result);
+					System.out.println("count "+count);
 					return result;
 				}
 				for(MapEdge r: curr.neighbours){
@@ -270,6 +272,7 @@ public class MapGraph {
 			}
 
 		}
+		System.out.println("count "+count);
 		return null;
 	}
 
@@ -298,20 +301,20 @@ public class MapGraph {
 											 GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
-		
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
-		
+		int count=0;
 		if (start == null || goal == null)
 			throw new NullPointerException("Cannot find route from or to null node");
 		List<GeographicPoint> result = new ArrayList<GeographicPoint>();
 		PriorityQueue<MapNode> que = new PriorityQueue<MapNode>();
 		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
 		HashMap<GeographicPoint,GeographicPoint> parent = new HashMap<GeographicPoint,GeographicPoint>();
+		MapNode gl = vertices.get(goal);
 		que.add(vertices.get(start));
 		//nodeSearched.accept(start);
-		vertices.get(start).distance = 0;
+		vertices.get(start).distance = 0.0;
+		vertices.get(start).projectedDistance = 0.0;
 		while(!que.isEmpty()){
+			count += 1;
 			MapNode curr = que.poll();			
 			GeographicPoint loc = curr.location;
 			if(!visited.contains(loc)){
@@ -326,16 +329,18 @@ public class MapGraph {
 							break;
 					}
 					Collections.reverse(result);
+					System.out.println("count "+count);
 					return result;
 				}
 				for(MapEdge r: curr.neighbours){
 					GeographicPoint other = r.getOtherPoint(loc);
 					if(!visited.contains(other)){
 						MapNode othr = vertices.get(other);
-						double predDistance = other.distance(goal);
-						double totalDistance = predDistance+curr.distance+r.getLength();
-						if(othr.distance > totalDistance){
-							othr.distance = totalDistance;
+						double dijkstraDistance = curr.distance + othr.distanceFrom(curr);
+						double predDistance = dijkstraDistance + othr.distanceFrom(gl);
+						if(predDistance < othr.projectedDistance){
+							othr.projectedDistance = predDistance;
+							othr.distance = dijkstraDistance;
 							parent.put(other, loc);
 							que.add(othr);
 						}
@@ -344,6 +349,7 @@ public class MapGraph {
 			}
 
 		}
+		System.out.println("count "+count);
 		return null;
 	}
 
@@ -364,7 +370,7 @@ public class MapGraph {
 		 * the Week 3 End of Week Quiz, EVEN IF you score 100% on the 
 		 * programming assignment.
 		 */
-		/*
+		
 		MapGraph simpleTestMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", simpleTestMap);
 		
@@ -374,7 +380,6 @@ public class MapGraph {
 		System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
 		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
 		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
-		
 		
 		MapGraph testMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
@@ -393,11 +398,11 @@ public class MapGraph {
 		System.out.println("Test 3 using utc: Dijkstra should be 37 and AStar should be 10");
 		testroute = testMap.dijkstra(testStart,testEnd);
 		testroute2 = testMap.aStarSearch(testStart,testEnd);
-		*/
+		
 		
 		
 		/* Use this code in Week 3 End of Week Quiz */
-		/*MapGraph theMap = new MapGraph();
+		MapGraph theMap = new MapGraph();
 		System.out.print("DONE. \nLoading the map...");
 		GraphLoader.loadRoadMap("data/maps/utc.map", theMap);
 		System.out.println("DONE.");
@@ -409,7 +414,7 @@ public class MapGraph {
 		List<GeographicPoint> route = theMap.dijkstra(start,end);
 		List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
-		*/
+		
 		
 	}
 	

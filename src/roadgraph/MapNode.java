@@ -2,6 +2,8 @@ package roadgraph;
 
 import java.util.HashSet;
 
+import javax.annotation.Generated;
+
 import geography.GeographicPoint;
 
 public class MapNode implements Comparable<MapNode>{
@@ -9,6 +11,7 @@ public class MapNode implements Comparable<MapNode>{
 	public HashSet<MapEdge> neighbours;
 	
 	public double distance;
+	public double projectedDistance;
 	final Integer INF = Integer.MAX_VALUE;
 	
 	
@@ -16,9 +19,12 @@ public class MapNode implements Comparable<MapNode>{
 		location = vertex;
 		neighbours = new HashSet<MapEdge>();
 		distance = INF;
+		projectedDistance = INF;
 		
 	}
-
+	public double distanceFrom(MapNode other){
+		return this.location.distance(other.location);
+	}
 
 	@Override
 	public int compareTo(MapNode o) {

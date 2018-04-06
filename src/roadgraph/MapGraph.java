@@ -17,8 +17,10 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.function.Consumer;
 
+import application.GeoLabel;
 import geography.GeographicPoint;
 import util.GraphLoader;
 
@@ -33,6 +35,7 @@ public class MapGraph {
 	//TODO: Add your member variables here in WEEK 3
 	public HashMap<GeographicPoint, MapNode> vertices;
 	public HashSet<MapEdge> edges;
+	public HashSet<GeographicPoint> dfsVisit;
 	
 	/** 
 	 * Create a new empty MapGraph 
@@ -43,6 +46,7 @@ public class MapGraph {
 		// TODO: Implement in this constructor in WEEK 3
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges = new HashSet<MapEdge>();
+		dfsVisit = new HashSet<GeographicPoint>();
 	}
 	
 	/**
@@ -237,7 +241,7 @@ public class MapGraph {
 		HashSet<GeographicPoint> visited = new HashSet<GeographicPoint>();
 		HashMap<GeographicPoint,GeographicPoint> parent = new HashMap<GeographicPoint,GeographicPoint>();
 		que.add(vertices.get(start));
-		//nodeSearched.accept(start);
+		nodeSearched.accept(start);
 		vertices.get(start).distance = 0;
 		while(!que.isEmpty()){
 			count += 1;
@@ -310,7 +314,7 @@ public class MapGraph {
 		HashMap<GeographicPoint,GeographicPoint> parent = new HashMap<GeographicPoint,GeographicPoint>();
 		MapNode gl = vertices.get(goal);
 		que.add(vertices.get(start));
-		//nodeSearched.accept(start);
+		nodeSearched.accept(start);
 		vertices.get(start).distance = 0.0;
 		vertices.get(start).projectedDistance = 0.0;
 		while(!que.isEmpty()){
@@ -352,9 +356,63 @@ public class MapGraph {
 		System.out.println("count "+count);
 		return null;
 	}
-
+	public void dfs(GeographicPoint start,
+			Stack<GeographicPoint> finishTime){
+		if (start == null)
+			throw new NullPointerException("Cannot find route from or to null node");
+		dfsVisit.add(start);
+		//nodeSearched.accept(start);
+		MapNode st = vertices.get(start);
+		for(MapEdge e:st.neighbours){
+			GeographicPoint v = e.getOtherPoint(start);
+			if(!dfsVisit.contains(v)){
+				dfsVisit.add(v);
+				dfs(v,finishTime);
+			}
+		}
+		finishTime.push(start);
+	}
 	
+	Stack<GeographicPoint> finishOrder() {
+		 Stack<GeographicPoint> finishTime = new Stack<GeographicPoint>();
+		 for(GeographicPoint u : vertices.keySet()){
+			 if(!dfsVisit.contains(u)){
+				 dfs(u, finishTime);
+			 }
+		}
+		return finishTime;
+	 } 
 	
+	int stronglyConnectedComponents() { 
+		 int scc = 0;
+		 Stack<GeographicPoint> ft = finishOrder();
+		 System.out.println(ft);
+		 restore();
+		 while(!ft.isEmpty()){
+			 GeographicPoint v = ft.pop();
+			 if(!dfsVisit.contains(v)){
+				 scc++;
+				 dfs(v,scc);
+			 }
+		 }
+		 return scc;
+	 }
+	
+	void restore(){
+		dfsVisit = new HashSet<>();
+	}
+	
+	void dfs(GeographicPoint u, int cno ){
+		 dfsVisit.add(u);
+		 MapNode n = vertices.get(u);
+		 for(MapEdge e: n.neighbours){
+			GeographicPoint v = e.getOtherPoint(u);
+			 if(!dfsVisit.contains(v)){
+				 dfsVisit.add(v);
+				 dfs(v,cno);
+			 }
+		 }		 
+	 }
 	public static void main(String[] args)
 	{
 		System.out.print("Making a new map...");
@@ -380,7 +438,8 @@ public class MapGraph {
 		System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
 		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
 		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
-		
+		int testroute3 = simpleTestMap.stronglyConnectedComponents();
+		System.out.println(testroute3);
 		MapGraph testMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
 		
@@ -390,7 +449,8 @@ public class MapGraph {
 		System.out.println("Test 2 using utc: Dijkstra should be 13 and AStar should be 5");
 		testroute = testMap.dijkstra(testStart,testEnd);
 		testroute2 = testMap.aStarSearch(testStart,testEnd);
-		
+		testroute3 = testMap.stronglyConnectedComponents();
+		System.out.println(testroute3);
 		
 		// A slightly more complex test using real data
 		testStart = new GeographicPoint(32.8674388, -117.2190213);
